@@ -74,7 +74,7 @@ function centralHeader(nameBytes, blobSize, checksum, localOffset, now) {
   return data;
 }
 
-export async function buildZip(entries, onProgress = () => {}) {
+async function buildZip(entries, onProgress = () => {}) {
   if (entries.length > 65535) throw new Error('Gói ZIP chứa quá nhiều tệp.');
   const localParts = [];
   const centralParts = [];
@@ -113,7 +113,7 @@ export async function buildZip(entries, onProgress = () => {}) {
   return new Blob([...localParts, ...centralParts, end], { type: 'application/zip' });
 }
 
-export function downloadBlob(blob, filename) {
+function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;

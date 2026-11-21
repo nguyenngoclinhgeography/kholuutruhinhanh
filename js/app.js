@@ -1,6 +1,3 @@
-import { readDraft, writeDraft, storeFile, readFile, removeFile, clearEverything } from './storage.js';
-import { buildZip, downloadBlob } from './zip-export.js';
-
 const $ = (id) => document.getElementById(id);
 const initial = window.PUBLISHED_CATALOG;
 if (!initial || !Array.isArray(initial.days) || !Array.isArray(initial.folders) || !Array.isArray(initial.media)) {
@@ -12,6 +9,7 @@ const state = {
   editing: false,
   hasDraft: false,
   fileTargetFolder: null,
+  captionQueue: [],
   objectUrls: new Map(),
   toastTimer: null,
   exportBusy: false
@@ -36,6 +34,19 @@ function formDate(date) {
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return '';
   const [year, month, day] = date.split('-');
   return `${day}/${month}/${year}`;
+}
+function surveyDayLabel(dayId) {
+  const day = state.catalog.days.find((entry) => entry.id === dayId);
+  return day ? `Ngày ${day.number} · ${day.date}` : '';
+}
+function formattedCoordinates(media) {
+  const latitude = String(media.latitude ?? '').trim();
+  const longitude = String(media.longitude ?? '').trim();
+  if (!latitude || !longitude) return '';
+  const lat = Number(latitude);
+  const lon = Number(longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return '';
+  return `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
 }
 function mimeKind(file) {
   if (['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'].includes(file.type)) return 'image';
@@ -147,7 +158,7 @@ function renderHome() {
       <div class="stat"><strong class="stat-number">${media}</strong><span class="stat-label">Ảnh và video<br/>đã lưu</span></div>
     </div></div>
     <section class="section container" id="hanh-trinh"><div class="section-heading"><div><p class="eyebrow">CHỌN CHẶNG KHẢO SÁT</p><h2>8 ngày, một hành trình đáng nhớ</h2><p>Mỗi ngày là một tập hợp các điểm đến. Chọn ngày để khám phá những thư mục minh chứng bên trong.</p></div><span class="section-aside">LỊCH SỬ · ĐỊA LÍ · VĂN HÓA</span></div>
-      <div class="day-grid">${days.map((day) => `<a class="day-card" href="${pathForHash(day.id)}" style="--day-color:${escapeHtml(day.color)}"><div class="day-card-art"><span class="day-badge">${day.number}</span><span class="day-date">${escapeHtml(day.date)}</span><span class="day-ornament" aria-hidden="true">✦</span></div><div class="day-card-body"><h3>${escapeHtml(day.title)}</h3><p>${escapeHtml(day.summary)}</p><div class="day-card-foot"><span>${allFolders(day.id).length} điểm · ${dayMediaCount(day.id)} minh chứng</span><span class="go">Mở ngày</span></div></div></a>`).join('')}</div>
+      <div class="day-grid">${days.map((day) => `<a class="day-card" href="${pathForHash(day.id)}" style="--day-color:${escapeHtml(day.color)}"><div class="day-card-art"><span class="day-badge">Ngày ${day.number}</span><span class="day-date">${escapeHtml(day.date)}</span><span class="day-ornament" aria-hidden="true">${['✺','✦','❋','✳','✤','✿','❖','✧'][day.number - 1] || '✦'}</span></div><div class="day-card-body"><span class="day-card-kicker">NHẬT KÝ THỰC ĐỊA · K49</span><h3>${escapeHtml(day.title)}</h3><p>${escapeHtml(day.summary)}</p><div class="day-card-foot"><span>${allFolders(day.id).length} điểm · ${dayMediaCount(day.id)} minh chứng</span><span class="go">Khám phá <span aria-hidden="true">✦</span></span></div></div></a>`).join('')}</div>
     </section>
     <section class="container note-section"><div class="note-card"><div><h3>Minh chứng gắn với trải nghiệm thực tế</h3><p>Ảnh và video trong kho được nhóm bổ sung theo địa điểm khảo sát. Mỗi minh chứng có thể kèm tên, ngày ghi hình, người thực hiện, chú thích và liên kết bản đồ.</p></div><button type="button" class="btn btn-primary" data-action="help">Xem hướng dẫn</button></div></section>`;
 }
@@ -179,9 +190,9 @@ function mediaCard(item, day, folder) {
     ? `<video src="${escapeHtml(src)}#t=0.1" muted preload="metadata" playsinline></video><span class="media-play">▶</span>`
     : `<img src="${escapeHtml(src)}" alt="${escapeHtml(item.title)}" loading="lazy"/>`)
     : '<span class="empty-icon" style="margin:auto">▧</span>';
-  const when = formDate(item.shotDate);
-  return `<article class="media-card"><button type="button" class="media-thumb" data-action="open-media" data-id="${escapeHtml(item.id)}" aria-label="Mở ${escapeHtml(item.title)}">${thumbnail}<span class="media-type">${item.type === 'video' ? '▶ Video' : '▣ Ảnh'}</span></button>
-    <div class="media-card-copy"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.caption || item.place || folder.name)}</p><div class="media-meta">${escapeHtml([when, item.author].filter(Boolean).join(' · ') || 'Minh chứng khảo sát')}</div>${state.editing ? `<div class="media-card-actions"><button class="mini-action" type="button" data-action="edit-media" data-id="${escapeHtml(item.id)}">Sửa chú thích</button><button class="mini-action danger" type="button" data-action="delete-media" data-id="${escapeHtml(item.id)}">Xóa</button></div>` : ''}</div></article>`;
+  const when = [formDate(item.shotDate), item.shotTime].filter(Boolean).join(' · ');
+  return `<article class="media-card"><button type="button" class="media-thumb" data-action="open-media" data-id="${escapeHtml(item.id)}" aria-label="Mở ${escapeHtml(item.title)}">${thumbnail}<span class="media-type">${item.type === 'video' ? '▶ Video' : '▣ Ảnh'}</span>${item.code ? `<span class="media-code-badge">${escapeHtml(item.code)}</span>` : ''}</button>
+    <div class="media-card-copy"><span class="media-place">${escapeHtml(item.place || folder.name)}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.caption || 'Minh chứng ghi nhận trong chuyến thực tế chuyên môn.')}</p><div class="media-meta">${escapeHtml([when, item.author].filter(Boolean).join(' · ') || 'Minh chứng khảo sát')}</div>${state.editing ? `<div class="media-card-actions"><button class="mini-action" type="button" data-action="edit-media" data-id="${escapeHtml(item.id)}">Sửa chú thích</button><button class="mini-action danger" type="button" data-action="delete-media" data-id="${escapeHtml(item.id)}">Xóa</button></div>` : ''}</div></article>`;
 }
 function renderFolder(day, folder) {
   const items = allMedia(folder.id);
@@ -198,13 +209,21 @@ function renderFolder(day, folder) {
 function showViewer(media, folder) {
   const src = mediaSrc(media);
   if (!src) { toast('Không tìm thấy tệp gốc. Hãy kiểm tra lại thư mục media trên GitHub.'); return; }
-  const when = formDate(media.shotDate);
-  const mapUrl = safeHref(media.mapUrl);
+  const when = [formDate(media.shotDate), media.shotTime].filter(Boolean).join(' · ');
+  const coords = formattedCoordinates(media);
+  const mapUrl = safeHref(media.mapUrl) || (coords ? `https://www.google.com/maps?q=${encodeURIComponent(coords)}` : '');
+  const facts = [
+    ['Địa điểm chụp', media.place || folder.name],
+    ['Ngày khảo sát', surveyDayLabel(media.surveyDay || folder.dayId)],
+    ['Ngày / giờ chụp', when],
+    ['Người chụp / Nguồn ảnh', media.author],
+    ['Tọa độ khảo sát', coords]
+  ].filter((entry) => entry[1]);
   $('viewer-content').innerHTML = `<div class="viewer-media">${media.type === 'video'
     ? `<video src="${escapeHtml(src)}" controls playsinline preload="metadata"></video>`
     : `<img src="${escapeHtml(src)}" alt="${escapeHtml(media.title)}"/>`}</div>
-    <div class="viewer-info"><h2>${escapeHtml(media.title)}</h2><p>${escapeHtml(media.caption || 'Minh chứng tại điểm khảo sát.')}</p>
-    <div class="viewer-details"><span>📍 ${escapeHtml(media.place || folder.name)}</span>${when ? `<span>◷ ${when}</span>` : ''}${media.author ? `<span>Ảnh / video: ${escapeHtml(media.author)}</span>` : ''}</div>
+    <div class="viewer-info"><div class="viewer-eyebrow">MINH CHỨNG THỰC ĐỊA · K49${media.code ? `<span class="viewer-code">${escapeHtml(media.code)}</span>` : ''}</div><h2>${escapeHtml(media.title)}</h2><p>${escapeHtml(media.caption || 'Minh chứng tại điểm khảo sát.')}</p>
+    <div class="viewer-fact-grid">${facts.map(([label, value]) => `<div class="viewer-fact"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join('')}</div>
     <div class="viewer-links">${mapUrl ? `<a class="btn btn-outline btn-small" href="${escapeHtml(mapUrl)}" target="_blank" rel="noopener noreferrer">Xem trên Google Maps</a>` : ''}<button class="btn btn-ghost btn-small" type="button" data-viewer-copy="true">Sao chép liên kết minh chứng</button></div></div>`;
   const dialog = $('viewer-dialog');
   if (!dialog.open) dialog.showModal();
@@ -248,13 +267,36 @@ function openFolderDialog(dayId, folderId = '') {
   $('folder-dialog').showModal();
   setTimeout(() => form.elements.name.focus(), 0);
 }
-function openMediaDialog(item) {
+function openMediaDialog(item, isNewUpload = false) {
   if (!requireEditing()) return;
   const form = $('media-form');
   form.reset();
-  for (const key of ['title', 'shotDate', 'caption', 'author', 'place', 'mapUrl']) form.elements[key].value = item[key] || '';
+  const folder = state.catalog.folders.find((entry) => entry.id === item.folderId);
+  const dayId = item.surveyDay || folder?.dayId || '';
+  const select = form.elements.surveyDay;
+  select.innerHTML = `<option value="">Chọn ngày</option>${state.catalog.days.map((day) => `<option value="${escapeHtml(day.id)}">Ngày ${day.number} (${escapeHtml(day.date)})</option>`).join('')}`;
+  for (const key of ['code', 'title', 'place', 'shotDate', 'shotTime', 'caption', 'author', 'latitude', 'longitude', 'mapUrl']) {
+    form.elements[key].value = item[key] || '';
+  }
+  select.value = dayId;
   form.elements.mediaId.value = item.id;
+  const src = mediaSrc(item);
+  const preview = src ? (item.type === 'video'
+    ? `<video src="${escapeHtml(src)}" muted playsinline preload="metadata"></video>`
+    : `<img src="${escapeHtml(src)}" alt="Ảnh đang chỉnh sửa" />`)
+    : `<div class="preview-fallback">▧</div>`;
+  $('media-form-preview').innerHTML = `<div class="form-preview-visual">${preview}</div><div><span class="preview-chip">${item.type === 'video' ? 'VIDEO' : 'HÌNH ẢNH'}</span><strong>${escapeHtml(item.title)}</strong><small>Hãy bổ sung thông tin để bộ ảnh có chú thích rõ ràng, dễ tra cứu.</small></div>`;
+  $('media-dialog-title').textContent = isNewUpload ? 'Bổ sung chú thích cho ảnh mới' : 'Chỉnh sửa thông tin ảnh / video';
+  $('media-dialog-hint').textContent = isNewUpload ? 'Ảnh đã được lưu tạm. Điền thông tin bên dưới để hoàn thiện minh chứng.' : 'Thông tin này được hiển thị khi người xem mở ảnh hoặc video.';
+  $('coordinate-panel').open = Boolean(item.latitude || item.longitude || item.mapUrl);
   $('media-dialog').showModal();
+}
+function openNextCaption() {
+  while (state.captionQueue.length) {
+    const id = state.captionQueue.shift();
+    const item = state.catalog.media.find((entry) => entry.id === id);
+    if (item) { openMediaDialog(item, true); return; }
+  }
 }
 async function deleteFolder(folderId) {
   if (!requireEditing()) return;
@@ -284,6 +326,7 @@ async function addFiles(files, folderId) {
   if (!folder) return;
   const max = 95 * 1024 * 1024;
   let added = 0;
+  const addedIds = [];
   const rejected = [];
   for (const file of Array.from(files)) {
     const type = mimeKind(file);
@@ -294,16 +337,23 @@ async function addFiles(files, folderId) {
     try { await storeFile(blobKey, file); }
     catch { rejected.push(`${file.name}: trình duyệt hết dung lượng lưu trữ`); continue; }
     const dot = file.name.lastIndexOf('.');
+    const baseName = dot > 0 ? file.name.slice(0, dot) : file.name;
+    const parsedCode = baseName.match(/^([A-Za-z]{2,}\d{2}-\d{2,})[-_ ]/);
     state.catalog.media.push({
       id, folderId, type, src: pathFor(folder.dayId, folderId, file), blobKey,
-      title: (dot > 0 ? file.name.slice(0, dot) : file.name).replace(/[_-]+/g, ' ').trim(),
-      caption: '', author: '', shotDate: '', place: folder.name, mapUrl: ''
+      code: parsedCode ? parsedCode[1].toUpperCase() : '',
+      title: (parsedCode ? baseName.slice(parsedCode[0].length) : baseName).replace(/[_-]+/g, ' ').trim() || baseName,
+      surveyDay: folder.dayId, caption: '', author: '', shotDate: '', shotTime: '',
+      place: folder.name, latitude: '', longitude: '', mapUrl: ''
     });
     added += 1;
+    addedIds.push(id);
   }
   if (added) {
     await saveDraftAndRender();
-    toast(`Đã thêm ${added} minh chứng. Bấm “Sửa chú thích” để ghi thông tin.`);
+    state.captionQueue.push(...addedIds);
+    openNextCaption();
+    toast(`Đã lưu tạm ${added} ảnh/video. Bạn có thể điền chú thích ngay bây giờ.`);
   }
   if (rejected.length) alert(`Một số tệp chưa được thêm:\n\n${rejected.join('\n')}`);
 }
@@ -386,7 +436,11 @@ function bindEvents() {
     await render();
     toast('Đã khôi phục bản danh mục đang xuất bản.');
   });
-  document.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => $(button.dataset.close).close()));
+  document.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => {
+    const target = button.dataset.close;
+    $(target).close();
+    if (target === 'media-dialog' && state.captionQueue.length) openNextCaption();
+  }));
   $('viewer-close').addEventListener('click', closeViewerRoute);
   $('viewer-dialog').addEventListener('close', () => { if (parseRoute().mediaId) closeViewerRoute(); });
   $('viewer-content').addEventListener('click', (event) => { if (event.target.closest('[data-viewer-copy]')) copyCurrentLink(); });
@@ -417,10 +471,28 @@ function bindEvents() {
     if (!item) return;
     const mapUrl = form.elements.mapUrl.value.trim();
     if (mapUrl && !safeHref(mapUrl)) { toast('Liên kết bản đồ chưa hợp lệ.'); return; }
-    for (const key of ['title', 'shotDate', 'caption', 'author', 'place', 'mapUrl']) item[key] = form.elements[key].value.trim();
+    const latitude = form.elements.latitude.value.trim();
+    const longitude = form.elements.longitude.value.trim();
+    if (Boolean(latitude) !== Boolean(longitude)) {
+      toast('Nếu thêm tọa độ, bạn cần nhập cả vĩ độ và kinh độ.');
+      $('coordinate-panel').open = true;
+      return;
+    }
+    const code = form.elements.code.value.trim().toUpperCase();
+    const duplicate = code && state.catalog.media.some((entry) => entry.id !== item.id && String(entry.code || '').toUpperCase() === code);
+    if (duplicate) { toast('Mã ảnh này đã được sử dụng. Hãy nhập mã khác.'); return; }
+    const requestedDay = form.elements.surveyDay.value;
+    if (requestedDay && !state.catalog.days.some((entry) => entry.id === requestedDay)) {
+      toast('Ngày khảo sát chưa hợp lệ.'); return;
+    }
+    for (const key of ['code', 'surveyDay', 'title', 'place', 'shotDate', 'shotTime', 'author', 'caption', 'latitude', 'longitude', 'mapUrl']) {
+      item[key] = form.elements[key].value.trim();
+    }
+    item.code = code;
     $('media-dialog').close();
     await saveDraftAndRender();
     toast('Đã lưu chú thích minh chứng.');
+    if (state.captionQueue.length) openNextCaption();
   });
   $('media-file-picker').addEventListener('change', async (event) => {
     const files = Array.from(event.target.files);

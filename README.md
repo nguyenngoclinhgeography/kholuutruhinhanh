@@ -4,10 +4,10 @@ Website tĩnh dùng trên **GitHub Pages**, phục vụ **Phụ lục 3 – Bộ
 
 ## Có gì trong website?
 
-- Trang chủ chia thành **8 ngày**, có tên chặng, ngày tháng và số minh chứng.
+- Trang chủ chia thành **8 thẻ “Ngày 1” đến “Ngày 8”**, có tên chặng, ngày tháng và số minh chứng; màu sắc từng thẻ hài hòa, dễ phân biệt.
 - Mỗi ngày có các **thư mục địa điểm**, đã gợi ý sẵn 21 điểm khảo sát để nhóm sử dụng ngay.
 - Có thể **thêm, đổi tên, xóa thư mục** và **thêm ảnh / video** trong từng thư mục.
-- Mỗi minh chứng có **tên, chú thích, ngày chụp/quay, người chụp/quay, địa điểm, liên kết Google Maps**.
+- Mỗi minh chứng có mẫu chú thích chi tiết: **mã ảnh, ngày khảo sát, tên ảnh/video, địa điểm chụp, ngày và giờ chụp, người chụp/nguồn ảnh, mô tả ngắn, tọa độ khảo sát, liên kết Google Maps**. Chỉ tên và địa điểm là bắt buộc.
 - Xem ảnh lớn và phát video ngay trên trang; có **liên kết trực tiếp** tới ngày, thư mục và từng minh chứng.
 - Có nút **lấy mã QR** cho URL đã đăng công khai.
 - Bản nháp được **lưu trong trình duyệt** trên thiết bị đang quản lý (IndexedDB).
@@ -27,12 +27,16 @@ Website tĩnh dùng trên **GitHub Pages**, phục vụ **Phụ lục 3 – Bộ
 1. Mở trang trên máy tính bạn dùng để quản lý.
 2. Bấm **Quản lý kho** ở góc trên. Vào ngày cần cập nhật, chọn thư mục có sẵn hoặc bấm **Tạo thư mục mới**.
 3. Trong thư mục, bấm **Thêm ảnh / video**. Bạn có thể chọn nhiều file hoặc kéo thả vào vùng tải lên.
-4. Bấm **Sửa chú thích** từng ảnh/video để nhập tên, mô tả, ngày chụp, người chụp và thông tin khác. Bấm **Lưu thông tin**.
+4. **Sau khi chọn ảnh/video, hộp “Bổ sung chú thích” tự mở**. Điền các trường như mẫu (mã ảnh dạng `MC06-01` nếu có, tên ảnh, địa điểm, ngày và giờ chụp, tác giả, mô tả...). Mở mục **Thêm tọa độ khảo sát** nếu cần ghi vĩ độ, kinh độ hoặc liên kết Google Maps. Bấm **Lưu chú thích**. Nếu tải lên nhiều tệp cùng lúc, các hộp chú thích sẽ lần lượt mở. Có thể chọn **Để sau** rồi chỉnh bằng nút **Sửa chú thích** dưới mỗi ảnh.
 5. Bấm **Xuất gói cập nhật** ở thanh thông báo màu xanh. Trình duyệt sẽ tải file `CAP_NHAT_KHO_MINH_CHUNG_YYYYMMDD.zip`.
 6. **Giải nén** ZIP cập nhật. Sao chép hai phần sau vào repo của website:
    - `data/catalog.js` (**ghi đè** tệp cũ): danh sách ngày, thư mục và thông tin minh chứng mới.
    - `media/` (**trộn thêm** tệp mới): toàn bộ ảnh/video chưa đăng của bản nháp. **Không xóa media cũ** khi sao chép.
 7. **Commit/push** những thay đổi lên GitHub. Sau khi GitHub Pages cập nhật, khách truy cập ở thiết bị khác sẽ nhìn thấy ảnh/video và chú thích mới.
+
+### Khi nâng cấp giao diện từ bản ZIP cũ
+
+Nếu website của nhóm **đã có ảnh/video công khai**, chỉ cần cập nhật mã giao diện (`index.html`, `css/styles.css`, `js/app.js` và các file mã nguồn khác nếu thay đổi). **Giữ nguyên `data/catalog.js` hiện có trên GitHub và toàn bộ thư mục `media/`**. Không dùng danh mục mặc định trong ZIP giao diện để ghi đè danh mục đang chứa ảnh. Thông tin ảnh đã lưu từ bản cũ vẫn xem được; có thể mở **Sửa chú thích** để bổ sung trường mới.
 
 ### Ví dụ gói cập nhật
 
@@ -91,7 +95,7 @@ README.md               Hướng dẫn đang đọc
 
 ## Mở xem trên máy trước khi đưa lên GitHub
 
-Giải nén mã nguồn và mở thư mục trong **VS Code**, sau đó dùng tiện ích **Live Server** để xem thử trang ở địa chỉ `http://localhost:...`. Hoặc dùng một máy chủ tĩnh bất kỳ trên máy tính. Vì JavaScript của trang dùng ES Modules, **không nên bấm đúp `index.html` để mở bằng `file://`**: nhiều trình duyệt sẽ chặn tải module từ ổ đĩa.
+**Bạn có thể bấm đúp vào `index.html` để xem trang trực tiếp** trên Chrome hoặc Microsoft Edge sau khi giải nén ZIP, không cần cài phần mềm hay dùng GitHub trước. Bản này sử dụng JavaScript thông thường, không còn phụ thuộc vào ES Modules vốn có thể bị trình duyệt chặn khi mở từ `file://`. Nếu trình duyệt không cho lưu bản nháp khi mở từ ổ đĩa, hãy xem bằng tiện ích **Live Server** trong VS Code hoặc đưa lên **GitHub Pages** để dùng đầy đủ chức năng quản lý.
 
 Với cấu hình GitHub Pages, đường dẫn đúng là:
 

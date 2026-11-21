@@ -59,21 +59,34 @@
       </form>
     </dialog>
 
-    <dialog id="media-dialog" class="form-dialog">
+    <dialog id="media-dialog" class="form-dialog media-form-dialog">
       <form id="media-form" class="dialog-panel">
-        <div class="dialog-top"><div><p class="eyebrow">CHÚ THÍCH MINH CHỨNG</p><h2>Sửa thông tin ảnh / video</h2></div><button type="button" data-close="media-dialog" class="icon-button" aria-label="Đóng">×</button></div>
+        <div class="dialog-top"><div><p class="eyebrow">NHẬT KÝ HÌNH ẢNH · K49</p><h2 id="media-dialog-title">Thông tin ảnh / video</h2><p id="media-dialog-hint" class="dialog-subtitle">Mỗi minh chứng là một ghi chép từ hành trình thực tế.</p></div><button type="button" data-close="media-dialog" class="icon-button" aria-label="Đóng">×</button></div>
         <input type="hidden" name="mediaId" />
+        <div id="media-form-preview" class="media-form-preview" aria-live="polite"></div>
         <div class="form-two-col">
-          <label class="field"><span>Tên ảnh / video <em>*</em></span><input name="title" type="text" maxlength="120" required /></label>
-          <label class="field"><span>Ngày chụp / quay</span><input name="shotDate" type="date" /></label>
+          <label class="field"><span>Mã ảnh <small>(tùy chọn)</small></span><input name="code" type="text" maxlength="40" placeholder="Ví dụ: MC06-01" /></label>
+          <label class="field"><span>Ngày khảo sát <small>(tùy chọn)</small></span><select name="surveyDay"><option value="">Chọn ngày</option></select></label>
         </div>
-        <label class="field"><span>Chú thích / nội dung minh chứng</span><textarea name="caption" rows="3" maxlength="700" placeholder="Mô tả ngắn về điều nhóm ghi nhận tại điểm khảo sát..."></textarea></label>
+        <label class="field"><span>Tên ảnh / video <em>*</em></span><input name="title" type="text" maxlength="120" required placeholder="Ví dụ: Ảnh bề mặt hồ Lắk" /></label>
+        <label class="field"><span>Địa điểm chụp <em>*</em></span><input name="place" type="text" maxlength="160" required placeholder="Ví dụ: Hồ Lắk – Đắk Lắk" /></label>
         <div class="form-two-col">
-          <label class="field"><span>Người chụp / quay</span><input name="author" type="text" maxlength="100" placeholder="Ví dụ: Lê Duy Mẫn" /></label>
-          <label class="field"><span>Địa điểm</span><input name="place" type="text" maxlength="120" /></label>
+          <label class="field"><span>Ngày chụp <small>(tùy chọn)</small></span><input name="shotDate" type="date" /></label>
+          <label class="field"><span>Giờ chụp <small>(tùy chọn)</small></span><input name="shotTime" type="time" /></label>
         </div>
-        <label class="field"><span>Liên kết Google Maps (nếu có)</span><input name="mapUrl" type="url" placeholder="https://maps.google.com/..." /></label>
-        <div class="dialog-actions"><button type="button" data-close="media-dialog" class="btn btn-outline">Hủy</button><button type="submit" class="btn btn-primary">Lưu thông tin</button></div>
+        <label class="field"><span>Người chụp / Nguồn ảnh <small>(tùy chọn)</small></span><input name="author" type="text" maxlength="120" placeholder="Ví dụ: Nguyễn Ngọc Linh – Nhóm K49" /></label>
+        <label class="field"><span>Mô tả ngắn <small>(tùy chọn)</small></span><textarea name="caption" rows="3" maxlength="1000" placeholder="Mô tả điều đã quan sát tại điểm khảo sát, giá trị lịch sử – địa lí hoặc trải nghiệm nổi bật..."></textarea></label>
+        <details class="coordinate-panel" id="coordinate-panel">
+          <summary><span class="coordinate-symbol" aria-hidden="true">⌖</span><span><strong>Thêm tọa độ khảo sát</strong><small>Không bắt buộc · Có thể lấy từ Google Maps</small></span><span class="coordinate-chevron" aria-hidden="true">⌄</span></summary>
+          <div class="coordinate-fields">
+            <div class="form-two-col">
+              <label class="field"><span>Vĩ độ (Latitude)</span><input name="latitude" type="number" step="any" min="-90" max="90" placeholder="Ví dụ: 12.420000" /></label>
+              <label class="field"><span>Kinh độ (Longitude)</span><input name="longitude" type="number" step="any" min="-180" max="180" placeholder="Ví dụ: 108.180000" /></label>
+            </div>
+            <label class="field"><span>Liên kết Google Maps <small>(tùy chọn)</small></span><input name="mapUrl" type="url" placeholder="https://maps.google.com/..." /></label>
+          </div>
+        </details>
+        <div class="dialog-actions"><button type="button" data-close="media-dialog" class="btn btn-outline">Để sau</button><button type="submit" class="btn btn-primary">Lưu chú thích</button></div>
       </form>
     </dialog>
 
@@ -99,7 +112,7 @@
         <div class="dialog-top"><div><p class="eyebrow">HƯỚNG DẪN SỬ DỤNG</p><h2>Kho minh chứng hoạt động thế nào?</h2></div><button type="button" data-close="help-dialog" class="icon-button" aria-label="Đóng">×</button></div>
         <ol class="help-steps">
           <li><strong>Chọn ngày khảo sát.</strong> Trang đầu có 8 chặng, mỗi chặng chứa các thư mục theo địa điểm.</li>
-          <li><strong>Bấm “Quản lý kho”.</strong> Tạo thư mục, tải ảnh/video từ máy, điền chú thích và lưu. Dữ liệu nháp được giữ trong trình duyệt của máy đang dùng.</li>
+          <li><strong>Bấm “Quản lý kho”.</strong> Tạo thư mục, tải ảnh/video từ máy. Sau khi chọn tệp, mẫu chú thích sẽ tự mở để nhập tên, nơi chụp, ngày giờ, người chụp, mã ảnh và tọa độ (nếu có). Dữ liệu nháp được giữ trong trình duyệt của máy đang dùng.</li>
           <li><strong>Bấm “Xuất gói cập nhật”.</strong> Một file ZIP gồm danh mục mới và ảnh/video vừa thêm sẽ được tải về.</li>
           <li><strong>Giải nén và chép vào GitHub.</strong> Ghi đè <code>data/catalog.js</code>, thêm thư mục <code>media</code> mới, giữ nguyên các ảnh cũ, rồi commit. Khi GitHub Pages cập nhật, mọi người mới nhìn thấy nội dung.</li>
           <li><strong>Chia sẻ.</strong> Sao chép liên kết của ngày hoặc địa điểm, hoặc lấy mã QR khi trang đã được đăng công khai.</li>
@@ -112,6 +125,8 @@
     <input id="media-file-picker" type="file" accept="image/*,video/mp4,video/webm,video/quicktime" multiple hidden />
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script src="./data/catalog.js"></script>
-    <script type="module" src="./js/app.js"></script>
+    <script defer src="./js/storage.js"></script>
+    <script defer src="./js/zip-export.js"></script>
+    <script defer src="./js/app.js"></script>
   </body>
 </html>

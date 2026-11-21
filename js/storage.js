@@ -37,27 +37,27 @@ async function requestStore(storeName, mode, operation) {
   });
 }
 
-export function readDraft() {
+function readDraft() {
   return requestStore('settings', 'readonly', (store) => store.get('draft'));
 }
 
-export function writeDraft(catalog) {
+function writeDraft(catalog) {
   return requestStore('settings', 'readwrite', (store) => store.put(catalog, 'draft'));
 }
 
-export function storeFile(key, blob) {
+function storeFile(key, blob) {
   return requestStore('files', 'readwrite', (store) => store.put(blob, key));
 }
 
-export function readFile(key) {
+function readFile(key) {
   return requestStore('files', 'readonly', (store) => store.get(key));
 }
 
-export function removeFile(key) {
+function removeFile(key) {
   return requestStore('files', 'readwrite', (store) => store.delete(key));
 }
 
-export async function clearEverything() {
+async function clearEverything() {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['settings', 'files'], 'readwrite');
