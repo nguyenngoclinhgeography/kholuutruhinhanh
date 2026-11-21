@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#123c41" />
+    <meta name="description" content="Kho ảnh và video minh chứng chuyến thực tế chuyên môn 8 ngày 7 đêm: lưu giữ cảnh quan, lịch sử và văn hóa qua từng điểm khảo sát." />
+    <title>Dấu chân miền di sản | Kho minh chứng</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#/" aria-label="Về trang chủ">
+          <span class="brand-mark" aria-hidden="true">✦</span>
+          <span class="brand-copy"><strong>DẤU CHÂN DI SẢN</strong><small>KHO MINH CHỨNG THỰC ĐỊA</small></span>
+        </a>
+        <nav class="topnav" aria-label="Điều hướng chính">
+          <a href="#/">8 ngày khảo sát</a>
+          <button type="button" id="help-button" class="nav-link">Hướng dẫn</button>
+          <button type="button" id="manage-button" class="btn btn-manage" aria-pressed="false">
+            <span aria-hidden="true">✎</span> Quản lý kho
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="editor-ribbon" id="editor-ribbon" hidden>
+      <span><strong>Đang quản lý trên thiết bị này.</strong> Ảnh, video mới chưa xuất hiện với người khác cho đến khi đăng bản cập nhật lên GitHub.</span>
+      <div class="ribbon-actions">
+        <button id="export-button" class="btn btn-white" type="button">Xuất gói cập nhật</button>
+        <button id="discard-button" class="text-button" type="button">Bỏ bản nháp</button>
+      </div>
+    </div>
+
+    <main id="app" class="app-shell" aria-live="polite">
+      <div class="page-loading">Đang mở hành trình...</div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-brand">DẤU CHÂN MIỀN DI SẢN <span>✦</span></div>
+          <p>Mỗi bức ảnh là một ghi chép. Mỗi điểm đến là một câu chuyện.</p>
+        </div>
+        <div class="footer-aside">Thực tế chuyên môn Lịch sử – Địa lí<br />13–20 tháng 9, 2026</div>
+      </div>
+    </footer>
+
+    <dialog id="folder-dialog" class="form-dialog">
+      <form id="folder-form" class="dialog-panel">
+        <div class="dialog-top"><div><p class="eyebrow">ĐỊA ĐIỂM KHẢO SÁT</p><h2 id="folder-dialog-title">Tạo thư mục</h2></div><button type="button" data-close="folder-dialog" class="icon-button" aria-label="Đóng">×</button></div>
+        <input type="hidden" name="folderId" />
+        <input type="hidden" name="dayId" />
+        <label class="field"><span>Tên thư mục <em>*</em></span><input name="name" type="text" maxlength="100" placeholder="Ví dụ: Tháp Po Klong Garai" required /></label>
+        <label class="field"><span>Giới thiệu ngắn</span><textarea name="description" rows="3" maxlength="280" placeholder="Ví dụ: Kiến trúc và tín ngưỡng Chăm Pa..."></textarea></label>
+        <div class="dialog-actions"><button type="button" data-close="folder-dialog" class="btn btn-outline">Hủy</button><button type="submit" class="btn btn-primary">Lưu thư mục</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="media-dialog" class="form-dialog">
+      <form id="media-form" class="dialog-panel">
+        <div class="dialog-top"><div><p class="eyebrow">CHÚ THÍCH MINH CHỨNG</p><h2>Sửa thông tin ảnh / video</h2></div><button type="button" data-close="media-dialog" class="icon-button" aria-label="Đóng">×</button></div>
+        <input type="hidden" name="mediaId" />
+        <div class="form-two-col">
+          <label class="field"><span>Tên ảnh / video <em>*</em></span><input name="title" type="text" maxlength="120" required /></label>
+          <label class="field"><span>Ngày chụp / quay</span><input name="shotDate" type="date" /></label>
+        </div>
+        <label class="field"><span>Chú thích / nội dung minh chứng</span><textarea name="caption" rows="3" maxlength="700" placeholder="Mô tả ngắn về điều nhóm ghi nhận tại điểm khảo sát..."></textarea></label>
+        <div class="form-two-col">
+          <label class="field"><span>Người chụp / quay</span><input name="author" type="text" maxlength="100" placeholder="Ví dụ: Lê Duy Mẫn" /></label>
+          <label class="field"><span>Địa điểm</span><input name="place" type="text" maxlength="120" /></label>
+        </div>
+        <label class="field"><span>Liên kết Google Maps (nếu có)</span><input name="mapUrl" type="url" placeholder="https://maps.google.com/..." /></label>
+        <div class="dialog-actions"><button type="button" data-close="media-dialog" class="btn btn-outline">Hủy</button><button type="submit" class="btn btn-primary">Lưu thông tin</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="viewer-dialog" class="viewer-dialog" aria-label="Xem minh chứng">
+      <div class="viewer-shell">
+        <button type="button" id="viewer-close" class="viewer-close" aria-label="Đóng ảnh hoặc video">×</button>
+        <div id="viewer-content"></div>
+      </div>
+    </dialog>
+
+    <dialog id="qr-dialog" class="form-dialog qr-dialog">
+      <div class="dialog-panel qr-panel">
+        <div class="dialog-top"><div><p class="eyebrow">CHIA SẺ MINH CHỨNG</p><h2>Mã QR của trang này</h2></div><button type="button" data-close="qr-dialog" class="icon-button" aria-label="Đóng">×</button></div>
+        <div class="qr-image-wrap"><img id="qr-image" alt="Mã QR dẫn đến liên kết hiện tại" width="250" height="250" /></div>
+        <p id="qr-description" class="muted center"></p>
+        <input id="qr-link" class="qr-link" readonly aria-label="Liên kết chia sẻ" />
+        <div class="dialog-actions"><button type="button" id="copy-qr-link" class="btn btn-outline">Sao chép liên kết</button><button type="button" data-close="qr-dialog" class="btn btn-primary">Xong</button></div>
+      </div>
+    </dialog>
+
+    <dialog id="help-dialog" class="form-dialog">
+      <div class="dialog-panel help-panel">
+        <div class="dialog-top"><div><p class="eyebrow">HƯỚNG DẪN SỬ DỤNG</p><h2>Kho minh chứng hoạt động thế nào?</h2></div><button type="button" data-close="help-dialog" class="icon-button" aria-label="Đóng">×</button></div>
+        <ol class="help-steps">
+          <li><strong>Chọn ngày khảo sát.</strong> Trang đầu có 8 chặng, mỗi chặng chứa các thư mục theo địa điểm.</li>
+          <li><strong>Bấm “Quản lý kho”.</strong> Tạo thư mục, tải ảnh/video từ máy, điền chú thích và lưu. Dữ liệu nháp được giữ trong trình duyệt của máy đang dùng.</li>
+          <li><strong>Bấm “Xuất gói cập nhật”.</strong> Một file ZIP gồm danh mục mới và ảnh/video vừa thêm sẽ được tải về.</li>
+          <li><strong>Giải nén và chép vào GitHub.</strong> Ghi đè <code>data/catalog.js</code>, thêm thư mục <code>media</code> mới, giữ nguyên các ảnh cũ, rồi commit. Khi GitHub Pages cập nhật, mọi người mới nhìn thấy nội dung.</li>
+          <li><strong>Chia sẻ.</strong> Sao chép liên kết của ngày hoặc địa điểm, hoặc lấy mã QR khi trang đã được đăng công khai.</li>
+        </ol>
+        <div class="help-note"><strong>Lưu ý:</strong> GitHub Pages không cho khách truy cập ghi trực tiếp lên kho ảnh. Nên dùng một máy để quản lý các bản cập nhật; nếu có nhiều người cùng chỉnh trên nhiều máy, hãy tổng hợp về một bản trước khi xuất.</div>
+        <div class="dialog-actions"><button type="button" data-close="help-dialog" class="btn btn-primary">Đã hiểu</button></div>
+      </div>
+    </dialog>
+
+    <input id="media-file-picker" type="file" accept="image/*,video/mp4,video/webm,video/quicktime" multiple hidden />
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./data/catalog.js"></script>
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
